@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horloge iPhone - Alarmes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 428px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        /* En-tête alarmes */
+        .alarm-header {
+            padding: 50px 20px 20px;
+        }
+
+        .alarm-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #ff9f0a;
+            font-size: 17px;
+            cursor: pointer;
+            padding: 0;
+            font-weight: 400;
+        }
+
+        .add-btn {
+            background: none;
+            border: none;
+            color: #ff9f0a;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            font-weight: 300;
+        }
+
+        .alarm-title {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-align: left;
+        }
+
+        /* Contenu */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* État vide */
+        .no-alarms {
+            text-align: center;
+            padding: 80px 40px;
+        }
+
+        .no-alarms-text {
+            font-size: 64px;
+            font-weight: 200;
+            color: #3a3a3c;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+        }
+
+        .no-alarms-subtext {
+            font-size: 15px;
+            color: #6e6e73;
+            font-weight: 400;
+        }
+
+        /* Alarmes */
+        .alarms-list {
+            margin-bottom: 20px;
+        }
+
+        .alarm-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #1c1c1e;
+        }
+
+        .alarm-info {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .alarm-time {
+            font-size: 50px;
+            font-weight: 200;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .alarm-item.disabled .alarm-time {
+            color: #3a3a3c;
+        }
+
+        .alarm-details {
+            font-size: 15px;
+            color: #8e8e93;
+            margin-top: 5px;
+        }
+
+        .alarm-item.disabled .alarm-details {
+            color: #3a3a3c;
+        }
+
+        .alarm-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .delete-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #ff453a;
+            background: none;
+            color: #ff453a;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .delete-btn.editing {
+            display: flex;
+        }
+
+        .delete-btn:hover {
+            background: #ff453a;
+            color: #fff;
+        }
+
+        .delete-btn:active {
+            opacity: 0.7;
+        }
+
+        .toggle-switch {
+            width: 51px;
+            height: 31px;
+            background: #39393d;
+            border-radius: 16px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch.active {
+            background: #4cd964;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 27px;
+            height: 27px;
+            border-radius: 50%;
+            background: #fff;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1c1c1e;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 350px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #2c2c2e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-btn {
+            background: none;
+            border: none;
+            color: #ff9f0a;
+            font-size: 17px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .modal-btn.cancel {
+            color: #ff9f0a;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .time-picker {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .time-input {
+            width: 70px;
+            height: 50px;
+            background: #2c2c2e;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 32px;
+            text-align: center;
+            font-weight: 300;
+        }
+
+        .time-separator {
+            font-size: 32px;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            color: #8e8e93;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: #2c2c2e;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .days-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .day-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #3a3a3c;
+            background: transparent;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .day-btn.selected {
+            background: #ff9f0a;
+            border-color: #ff9f0a;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête alarmes -->
+        <div class="alarm-header">
+            <div class="alarm-header-top">
+                <button class="edit-btn" id="editBtn">Modifier</button>
+                <button class="add-btn" id="addBtn">+</button>
+            </div>
+            <h1 class="alarm-title">Alarmes</h1>
+        </div>
+
+        <div class="content">
+            <!-- Alarmes -->
+            <div id="alarmsContainer">
+                <!-- Les alarmes apparaîtront ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter/modifier une alarme -->
+    <div class="modal" id="alarmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-btn cancel" id="cancelBtn">Annuler</button>
+                <h2 id="modalTitle">Ajouter une alarme</h2>
+                <button class="modal-btn" id="saveBtn">Enregistrer</button>
+            </div>
+            <div class="modal-body">
+                <div class="time-picker">
+                    <input type="number" class="time-input" id="alarmHour" min="0" max="23" value="07" placeholder="07">
+                    <span class="time-separator">:</span>
+                    <input type="number" class="time-input" id="alarmMinute" min="0" max="59" value="00" placeholder="00">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Libellé</label>
+                    <input type="text" class="form-input" id="alarmLabel" placeholder="Réveil" maxlength="30">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Répéter</label>
+                    <div class="days-selector">
+                        <button class="day-btn" data-day="0">D</button>
+                        <button class="day-btn" data-day="1">L</button>
+                        <button class="day-btn" data-day="2">M</button>
+                        <button class="day-btn" data-day="3">M</button>
+                        <button class="day-btn" data-day="4">J</button>
+                        <button class="day-btn" data-day="5">V</button>
+                        <button class="day-btn" data-day="6">S</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gestion des alarmes
+        let alarms = [];
+        let nextAlarmId = 1;
+        let editingAlarmId = null;
+        let isEditMode = false;
+
+        const alarmModal = document.getElementById('alarmModal');
+        const addBtn = document.getElementById('addBtn');
+        const editBtn = document.getElementById('editBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const alarmsContainer = document.getElementById('alarmsContainer');
+        const modalTitle = document.getElementById('modalTitle');
+
+        function formatTime(hour, minute) {
+            return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        }
+
+        function getDaysText(days) {
+            if (days.length === 0) return '';
+            if (days.length === 7) return 'Tous les jours';
+            
+            const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+            if (days.length === 5 && days.includes(1) && days.includes(2) && days.includes(3) && days.includes(4) && days.includes(5)) {
+                return 'En semaine';
+            }
+            if (days.length === 2 && days.includes(0) && days.includes(6)) {
+                return 'Week-end';
+            }
+            
+            return days.sort((a, b) => a - b).map(d => dayNames[d]).join(' ');
+        }
+
+        function renderAlarms() {
+            if (alarms.length === 0) {
+                alarmsContainer.innerHTML = `
+                    <div class="no-alarms">
+                        <div class="no-alarms-text">Aucune alarme</div>
+                        <div class="no-alarms-subtext">Demain matin</div>
+                    </div>
+                `;
+                return;
+            }
+
+            alarmsContainer.innerHTML = '<div class="alarms-list"></div>';
+            const list = alarmsContainer.querySelector('.alarms-list');
+
+            alarms.forEach(alarm => {
+                const alarmDiv = document.createElement('div');
+                alarmDiv.className = `alarm-item ${!alarm.enabled ? 'disabled' : ''}`;
+                
+                const details = [];
+                if (alarm.label) details.push(alarm.label);
+                const daysText = getDaysText(alarm.days);
+                if (daysText) details.push(daysText);
+
+                alarmDiv.innerHTML = `
+                    <div class="alarm-info" onclick="editAlarm(${alarm.id})">
+                        <div class="alarm-time">${formatTime(alarm.hour, alarm.minute)}</div>
+                        ${details.length > 0 ? `<div class="alarm-details">${details.join(', ')}</div>` : ''}
+                    </div>
+                    <div class="alarm-actions">
+                        <button class="delete-btn ${isEditMode ? 'editing' : ''}" onclick="deleteAlarm(${alarm.id}, event)">−</button>
+                        <div class="toggle-switch ${alarm.enabled ? 'active' : ''}" onclick="toggleAlarm(${alarm.id})"></div>
+                    </div>
+                `;
+                list.appendChild(alarmDiv);
+            });
+        }
+
+        window.toggleAlarm = function(id) {
+            const alarm = alarms.find(a => a.id === id);
+            if (alarm) {
+                alarm.enabled = !alarm.enabled;
+                renderAlarms();
+            }
+        };
+
+        window.deleteAlarm = function(id, event) {
+            if (event) event.stopPropagation();
+            alarms = alarms.filter(a => a.id !== id);
+            renderAlarms();
+            if (alarms.length === 0) {
+                isEditMode = false;
+                editBtn.textContent = 'Modifier';
+            }
+        };
+
+        window.editAlarm = function(id) {
+            if (isEditMode) return;
+            
+            editingAlarmId = id;
+            const alarm = alarms.find(a => a.id === id);
+            if (alarm) {
+                document.getElementById('alarmHour').value = String(alarm.hour).padStart(2, '0');
+                document.getElementById('alarmMinute').value = String(alarm.minute).padStart(2, '0');
+                document.getElementById('alarmLabel').value = alarm.label;
+                
+                document.querySelectorAll('.day-btn').forEach(btn => {
+                    const day = parseInt(btn.dataset.day);
+                    if (alarm.days.includes(day)) {
+                        btn.classList.add('selected');
+                    } else {
+                        btn.classList.remove('selected');
+                    }
+                });
+                
+                modalTitle.textContent = 'Modifier l\'alarme';
+                alarmModal.classList.add('active');
+            }
+        };
+
+        editBtn.addEventListener('click', () => {
+            if (alarms.length === 0) return;
+            
+            isEditMode = !isEditMode;
+            editBtn.textContent = isEditMode ? 'OK' : 'Modifier';
+            renderAlarms();
+        });
+
+        addBtn.addEventListener('click', () => {
+            editingAlarmId = null;
+            document.getElementById('alarmHour').value = '07';
+            document.getElementById('alarmMinute').value = '00';
+            document.getElementById('alarmLabel').value = '';
+            document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('selected'));
+            modalTitle.textContent = 'Ajouter une alarme';
+            alarmModal.classList.add('active');
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            alarmModal.classList.remove('active');
+        });
+
+        alarmModal.addEventListener('click', (e) => {
+            if (e.target === alarmModal) {
+                alarmModal.classList.remove('active');
+            }
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const hour = parseInt(document.getElementById('alarmHour').value) || 0;
+            const minute = parseInt(document.getElementById('alarmMinute').value) || 0;
+            const label = document.getElementById('alarmLabel').value.trim();
+            const selectedDays = Array.from(document.querySelectorAll('.day-btn.selected'))
+                .map(btn => parseInt(btn.dataset.day));
+
+            if (hour < 0 || hour > 23) {
+                alert('L\'heure doit être entre 0 et 23');
+                return;
+            }
+            if (minute < 0 || minute > 59) {
+                alert('Les minutes doivent être entre 0 et 59');
+                return;
+            }
+
+            if (editingAlarmId) {
+                const alarm = alarms.find(a => a.id === editingAlarmId);
+                if (alarm) {
+                    alarm.hour = hour;
+                    alarm.minute = minute;
+                    alarm.label = label;
+                    alarm.days = selectedDays;
+                }
+            } else {
+                alarms.push({
+                    id: nextAlarmId++,
+                    hour,
+                    minute,
+                    label,
+                    enabled: true,
+                    days: selectedDays
+                });
+            }
+
+            renderAlarms();
+            alarmModal.classList.remove('active');
+        });
+
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('selected');
+            });
+        });
+
+        // Initialiser l'affichage des alarmes
+        renderAlarms();
+    </script>
+</body>
+</html>
